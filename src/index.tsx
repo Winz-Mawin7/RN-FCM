@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from "react";
-import { View, Text } from "react-native";
-import messaging from "@react-native-firebase/messaging";
+import React, { useEffect, useState } from 'react';
+import { Text, ScrollView } from 'react-native';
+import messaging from '@react-native-firebase/messaging';
 
 const App = () => {
-  const [message, setMessage] = useState<Array<string | undefined>>(["Initial Text"]);
+  const initialState = [{ time: new Date().toLocaleTimeString(), title: 'Title', data: 'Waiting for messages...' }];
+  const [messages, setMessages] = useState(initialState);
 
   // async function getDeviceToken() {
   //   const token = await messaging().getToken();
@@ -13,30 +14,32 @@ const App = () => {
 
   useEffect(() => {
     const unsubscribe = messaging().onMessage(async (remoteMessage) => {
-      let { notification } = remoteMessage;
-      let { sentTime } = remoteMessage;
-      console.log(`Sent Time: ${new Date(sentTime).toLocaleString()}`);
+      console.log(`MESSAGE: ${remoteMessage}`);
+      const time = new Date(remoteMessage.sentTime).toLocaleTimeString();
+      const title = remoteMessage.notification.title;
+      const data = remoteMessage.notification.body;
 
-      let body = notification?.body;
-      setMessage([...message, body]);
+      setMessages((prev) => [...prev, { time, title, data }]);
     });
     return () => {
       unsubscribe;
     };
   }, []);
 
-  // Background
-  messaging().setBackgroundMessageHandler(async (remoteMessage) => {
-    console.log("Message handled in the background!", remoteMessage);
-  });
-
   return (
-    <View>
-      {message.map((item, index) => (
-        <Text key={index}>{item}</Text>
+    <ScrollView>
+      {messages.map((item, index) => (
+        <Text key={index}>
+          Time: {item.time + '\t'} Title: {item.title + '\t'} Data: {item.data}
+        </Text>
       ))}
-    </View>
+    </ScrollView>
   );
 };
 
 export default App;
+
+// Background
+// messaging().setBackgroundMessageHandler(async (remoteMessage) => {
+//   console.log("Message handled in the background!", remoteMessage);
+// });
